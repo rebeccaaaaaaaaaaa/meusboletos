@@ -25,7 +25,7 @@ export function BoletoForm({ onSubmit, onCancel }: BoletoFormProps) {
       await form.handlePDFUpload(file);
       alert('✓ PDF processado com sucesso! Verifique os dados extraídos.');
     } catch (err) {
-      console.error('Erro ao processar PDF:', err);
+      // Erro já tratado pelo hook
     }
   };
 
@@ -33,7 +33,7 @@ export function BoletoForm({ onSubmit, onCancel }: BoletoFormProps) {
     try {
       form.handleCodeValidation();
     } catch (err) {
-      console.error('Erro ao validar código:', err);
+      // Erro já tratado pelo hook
     }
   };
 
@@ -54,7 +54,7 @@ export function BoletoForm({ onSubmit, onCancel }: BoletoFormProps) {
       onSubmit(data);
       form.reset();
     } catch (err) {
-      console.error('Erro ao submeter formulário:', err);
+      // Erro já tratado
     }
   };
 

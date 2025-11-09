@@ -45,12 +45,7 @@ export function BoletoForm({ onSubmit, onCancel }: BoletoFormProps) {
     }
 
     setIsProcessing(true);
-    console.log('🔍 Processando código:', codigo);
-    console.log('🔍 Código limpo:', codigo.replace(/\D/g, ''));
-    console.log('🔍 Comprimento:', codigo.replace(/\D/g, '').length);
-    
     const result = parseBoleto(codigo);
-    console.log('📊 Resultado do parse:', result);
     
     if (!result.isValid) {
       setParseError(result.error || 'Código inválido');
@@ -91,17 +86,6 @@ export function BoletoForm({ onSubmit, onCancel }: BoletoFormProps) {
         
         if (result.isValid) {
           // Usar dados do PDF (mais confiáveis) em vez dos calculados pelo parseBoleto
-          console.log('🔄 Mesclando dados:', {
-            dadosExtraidosPDF: dadosExtraidos,
-            resultadoParseBoleto: result
-          });
-          
-          console.log('🔍 Verificando vencimento:', {
-            vencimentoPDF: dadosExtraidos.vencimento,
-            temVencimentoPDF: !!dadosExtraidos.vencimento,
-            vencimentoParseBoleto: result.vencimento
-          });
-          
           // Criar data de vencimento corretamente (sem problemas de fuso horário)
           let vencimentoFinal = result.vencimento;
           if (dadosExtraidos.vencimento) {
@@ -114,9 +98,6 @@ export function BoletoForm({ onSubmit, onCancel }: BoletoFormProps) {
             valor: dadosExtraidos.valor ?? result.valor,
             vencimento: vencimentoFinal,
           };
-          
-          console.log('✅ Resultado final mesclado:', resultadoMesclado);
-          console.log('📅 Vencimento final:', resultadoMesclado.vencimento);
           
           setParseResult(resultadoMesclado);
           
@@ -203,11 +184,6 @@ export function BoletoForm({ onSubmit, onCancel }: BoletoFormProps) {
       beneficiario: beneficiario.trim() || undefined,
       observacoes: observacoes.trim() || undefined,
     };
-
-    console.log('💾 Salvando boleto:', {
-      parseResult: parseResult,
-      boletoInput: boletoInput
-    });
 
     onSubmit(boletoInput);
   };

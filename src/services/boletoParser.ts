@@ -161,19 +161,11 @@ function extrairValor(codigoBarras: string): number | undefined {
   const limpa = limparCodigo(codigoBarras);
   
   if (limpa.length !== 44) {
-    console.log('❌ Código não tem 44 dígitos para extrair valor:', limpa.length);
     return undefined;
   }
 
   const valorString = limpa.substring(9, 19);
   const valor = parseInt(valorString) / 100;
-
-  console.log('💰 Extração de valor:', {
-    codigoBarras: limpa,
-    valorString: valorString,
-    posicoes: '9-19',
-    valorCalculado: valor
-  });
 
   return valor > 0 ? valor : undefined;
 }
@@ -236,7 +228,6 @@ function validarCodigoBarras(codigoBarras: string): boolean {
   const limpa = limparCodigo(codigoBarras);
   
   if (limpa.length !== 44) {
-    console.log('❌ Código de barras não tem 44 dígitos:', limpa.length);
     return false;
   }
 
@@ -248,16 +239,6 @@ function validarCodigoBarras(codigoBarras: string): boolean {
   
   // Calcular DV
   const dvCalculado = calcularDVModulo11(codigoSemDV);
-
-  console.log('🔐 Validação DV:', {
-    codigoBarras: limpa,
-    codigoBarrasLength: limpa.length,
-    codigoSemDV: codigoSemDV,
-    codigoSemDVLength: codigoSemDV.length,
-    dvEncontrado: dv,
-    dvCalculado: dvCalculado,
-    valido: dv === dvCalculado
-  });
 
   return dv === dvCalculado;
 }

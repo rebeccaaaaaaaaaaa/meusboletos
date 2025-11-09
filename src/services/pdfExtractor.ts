@@ -42,12 +42,6 @@ async function extrairTextoDoPDF(file: File): Promise<string> {
     textoCompleto += pageText + '\n';
   }
   
-  console.log('📄 TEXTO COMPLETO DO PDF:');
-  console.log('='.repeat(80));
-  console.log(textoCompleto);
-  console.log('='.repeat(80));
-  console.log('Primeiros 1000 caracteres:', textoCompleto.substring(0, 1000));
-  
   return textoCompleto;
 }
 
@@ -72,7 +66,6 @@ function extrairCodigosDoTexto(texto: string): BoletoExtraido {
       const linhaLimpa = match.replace(/[^\d]/g, '');
       if (linhaLimpa.length === 47) {
         resultado.linhaDigitavel = linhaLimpa;
-        console.log('🔍 Linha digitável encontrada:', match, '→', linhaLimpa);
         break;
       }
     }
@@ -86,7 +79,6 @@ function extrairCodigosDoTexto(texto: string): BoletoExtraido {
       const linhaLimpa = matchSimples[0].replace(/[^\d]/g, '');
       if (linhaLimpa.length === 47) {
         resultado.linhaDigitavel = linhaLimpa;
-        console.log('🔍 Linha digitável encontrada (simples):', matchSimples[0], '→', linhaLimpa);
       }
     }
   }
@@ -115,7 +107,6 @@ function extrairCodigosDoTexto(texto: string): BoletoExtraido {
     const valorNum = parseInt(valorStr);
     if (valorNum > 0) {
       resultado.valor = valorNum / 100;
-      console.log('💰 Valor extraído da linha digitável:', valorStr, '→', resultado.valor);
     }
   }
   
@@ -135,7 +126,6 @@ function extrairCodigosDoTexto(texto: string): BoletoExtraido {
         if (valorMatch) {
           const valorStr = valorMatch[0].replace(/\./g, '').replace(',', '.');
           resultado.valor = parseFloat(valorStr);
-          console.log('💰 Valor extraído do texto:', matchValor[0], '→', resultado.valor);
           break;
         }
       }
@@ -143,7 +133,6 @@ function extrairCodigosDoTexto(texto: string): BoletoExtraido {
   }
   
   // Extrair vencimento - do TEXTO primeiro (mais confiável que calcular pelo fator)
-  console.log('🔍 Procurando vencimento no texto...');
   
   const regexesVencimento = [
     /Vencimento[\s:]*(\d{2}[\/\-]\d{2}[\/\-]\d{4})/gi,
@@ -155,7 +144,6 @@ function extrairCodigosDoTexto(texto: string): BoletoExtraido {
   
   for (const regex of regexesVencimento) {
     const matchVencimento = texto.match(regex);
-    console.log('🔍 Testando regex:', regex, '→ Matches:', matchVencimento);
     
     if (matchVencimento && matchVencimento[0]) {
       const dataMatch = matchVencimento[0].match(/(\d{2}[\/\-]\d{2}[\/\-]\d{2,4})/);
@@ -170,14 +158,9 @@ function extrairCodigosDoTexto(texto: string): BoletoExtraido {
         }
         
         resultado.vencimento = `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
-        console.log('✅ Vencimento extraído do texto:', matchVencimento[0], '→', resultado.vencimento);
         break;
       }
     }
-  }
-  
-  if (!resultado.vencimento) {
-    console.log('❌ Não foi possível extrair vencimento do texto');
   }
   
   // Reconstruir código de barras da linha digitável
@@ -188,18 +171,6 @@ function extrairCodigosDoTexto(texto: string): BoletoExtraido {
     // Posições: 0-9 (campo1+DV), 10-20 (campo2+DV), 21-31 (campo3+DV), 32 (DV), 33-47 (fator+valor)
     
     const linha = resultado.linhaDigitavel;
-    
-    console.log('🔍 Análise da linha digitável:', {
-      linhaCompleta: linha,
-      comprimento: linha.length,
-      campo1: linha.substring(0, 10) + ' (posições 0-9)',
-      campo2: linha.substring(10, 21) + ' (posições 10-20)',
-      campo3: linha.substring(21, 32) + ' (posições 21-31)',
-      dvGeral: linha.substring(32, 33) + ' (posição 32)',
-      fatorEValor: linha.substring(33, 47) + ' (posições 33-46)',
-      fatorExtraido: linha.substring(33, 37) + ' (posições 33-36)',
-      valorExtraido: linha.substring(37, 47) + ' (posições 37-46)'
-    });
     
     // Reconstruir código de barras (44 dígitos) removendo os DVs dos campos
     const codigoBarras = 
@@ -213,21 +184,6 @@ function extrairCodigosDoTexto(texto: string): BoletoExtraido {
     
     // Atribuir código de barras reconstruído
     resultado.codigoBarras = codigoBarras;
-    
-    // Extrair fator de vencimento do código de barras (posições 5-8)
-    const fatorStr = codigoBarras.substring(5, 9);
-    const fator = parseInt(fatorStr);
-    
-    console.log('📊 Código de barras reconstruído:', codigoBarras, `(${codigoBarras.length} dígitos)`);
-    console.log('📊 Estrutura:', {
-      banco: codigoBarras.substring(0, 3),
-      moeda: codigoBarras.substring(3, 4),
-      dv: codigoBarras.substring(4, 5),
-      fator: codigoBarras.substring(5, 9),
-      valor: codigoBarras.substring(9, 19),
-      campoLivre: codigoBarras.substring(19, 44)
-    });
-    console.log('📊 Fator extraído:', fatorStr, '→', fator);
   }
   
   // Extrair beneficiário/cedente - buscar no texto todo
@@ -249,7 +205,6 @@ function extrairCodigosDoTexto(texto: string): BoletoExtraido {
             !nome.includes('Endereço') &&
             !nome.includes('Agência')) {
           resultado.beneficiario = `${nome} ${cnpj}`;
-          console.log('🏢 Beneficiário encontrado:', resultado.beneficiario);
           break;
         }
       }
@@ -275,7 +230,6 @@ function extrairCodigosDoTexto(texto: string): BoletoExtraido {
         
         if (nome.length >= 10 && nome.length <= 100 && !nome.includes('Local de Pagamento')) {
           resultado.beneficiario = nome.substring(0, 100);
-          console.log('🏢 Beneficiário encontrado (alternativo):', resultado.beneficiario);
           break;
         }
       }
@@ -324,7 +278,6 @@ function extrairCodigosDoTexto(texto: string): BoletoExtraido {
         // Validar que não é uma data ou valor muito pequeno
         if (doc.length >= 3 && !doc.includes('/') && !doc.match(/^\d{2}$/)) {
           resultado.numeroDocumento = doc;
-          console.log('📄 Número do documento encontrado:', doc);
           break;
         }
       }
@@ -342,7 +295,6 @@ function extrairCodigosDoTexto(texto: string): BoletoExtraido {
         const matchNum = linha.match(/\b(\d{5,})\b/);
         if (matchNum) {
           resultado.numeroDocumento = matchNum[1];
-          console.log('📄 Número do documento encontrado (linha):', matchNum[1]);
           break;
         }
       }
@@ -376,15 +328,6 @@ export async function extrairDadosDoBoleto(file: File): Promise<BoletoExtraido> 
     
     // Extrair dados do boleto do texto
     const dados = extrairCodigosDoTexto(texto);
-    
-    console.log('✅ Dados extraídos do PDF:', {
-      temCodigoBarras: !!dados.codigoBarras,
-      temLinhaDigitavel: !!dados.linhaDigitavel,
-      valor: dados.valor,
-      vencimento: dados.vencimento,
-      beneficiario: dados.beneficiario?.substring(0, 30) + '...',
-      numeroDocumento: dados.numeroDocumento,
-    });
     
     // Validar se encontrou pelo menos o código de barras ou linha digitável
     if (!dados.codigoBarras && !dados.linhaDigitavel) {
