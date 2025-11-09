@@ -142,7 +142,45 @@ function extrairCodigosDoTexto(texto: string): BoletoExtraido {
     }
   }
   
-  // Extrair vencimento - do código de barras primeiro (mais confiável)
+  // Extrair vencimento - do TEXTO primeiro (mais confiável que calcular pelo fator)
+  console.log('🔍 Procurando vencimento no texto...');
+  
+  const regexesVencimento = [
+    /Vencimento[\s:]*(\d{2}[\/\-]\d{2}[\/\-]\d{4})/gi,
+    /(?:VENCIMENTO|Data de Vencimento|Data do Vencimento)[\s:]*(\d{2}[\/\-]\d{2}[\/\-]\d{4})/gi,
+    /(?:Vencimento|VENCIMENTO)[\s:]*(\d{2}[\/\-]\d{2}[\/\-]\d{2,4})/gi,
+    // Tentar pegar qualquer data no formato dd/mm/yyyy próxima à palavra "Vencimento"
+    /\d{2}\/\d{2}\/\d{4}/g,
+  ];
+  
+  for (const regex of regexesVencimento) {
+    const matchVencimento = texto.match(regex);
+    console.log('🔍 Testando regex:', regex, '→ Matches:', matchVencimento);
+    
+    if (matchVencimento && matchVencimento[0]) {
+      const dataMatch = matchVencimento[0].match(/(\d{2}[\/\-]\d{2}[\/\-]\d{2,4})/);
+      if (dataMatch) {
+        const partes = dataMatch[0].split(/[\/\-]/);
+        let [dia, mes, ano] = partes;
+        
+        // Converter ano de 2 dígitos para 4 dígitos
+        if (ano.length === 2) {
+          const anoNum = parseInt(ano);
+          ano = anoNum > 50 ? `19${ano}` : `20${ano}`;
+        }
+        
+        resultado.vencimento = `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+        console.log('✅ Vencimento extraído do texto:', matchVencimento[0], '→', resultado.vencimento);
+        break;
+      }
+    }
+  }
+  
+  if (!resultado.vencimento) {
+    console.log('❌ Não foi possível extrair vencimento do texto');
+  }
+  
+  // Reconstruir código de barras da linha digitável
   if (resultado.linhaDigitavel) {
     // Converter linha digitável para código de barras
     // Linha digitável: AAAAA.AAAAA BBBBB.BBBBBB CCCCC.CCCCCC D FFFFVVVVVVVVVV
@@ -150,6 +188,18 @@ function extrairCodigosDoTexto(texto: string): BoletoExtraido {
     // Posições: 0-9 (campo1+DV), 10-20 (campo2+DV), 21-31 (campo3+DV), 32 (DV), 33-47 (fator+valor)
     
     const linha = resultado.linhaDigitavel;
+    
+    console.log('🔍 Análise da linha digitável:', {
+      linhaCompleta: linha,
+      comprimento: linha.length,
+      campo1: linha.substring(0, 10) + ' (posições 0-9)',
+      campo2: linha.substring(10, 21) + ' (posições 10-20)',
+      campo3: linha.substring(21, 32) + ' (posições 21-31)',
+      dvGeral: linha.substring(32, 33) + ' (posição 32)',
+      fatorEValor: linha.substring(33, 47) + ' (posições 33-46)',
+      fatorExtraido: linha.substring(33, 37) + ' (posições 33-36)',
+      valorExtraido: linha.substring(37, 47) + ' (posições 37-46)'
+    });
     
     // Reconstruir código de barras (44 dígitos) removendo os DVs dos campos
     const codigoBarras = 
@@ -178,49 +228,6 @@ function extrairCodigosDoTexto(texto: string): BoletoExtraido {
       campoLivre: codigoBarras.substring(19, 44)
     });
     console.log('📊 Fator extraído:', fatorStr, '→', fator);
-    
-    if (fator > 1000 && fator < 9999) {
-      // Data base: 07/10/1997
-      const dataBase = new Date(1997, 9, 7);
-      const vencimento = new Date(dataBase);
-      vencimento.setDate(vencimento.getDate() + fator);
-      
-      const ano = vencimento.getFullYear();
-      const mes = String(vencimento.getMonth() + 1).padStart(2, '0');
-      const dia = String(vencimento.getDate()).padStart(2, '0');
-      resultado.vencimento = `${ano}-${mes}-${dia}`;
-      console.log('📅 Vencimento calculado do fator:', fator, '→', resultado.vencimento);
-    }
-  }
-  
-  // Se não conseguiu extrair do código, tentar do texto
-  if (!resultado.vencimento) {
-    const regexesVencimento = [
-      /Vencimento[\s:]*(\d{2}[\/\-]\d{2}[\/\-]\d{4})/gi,
-      /(?:VENCIMENTO|Data de Vencimento|Data do Vencimento)[\s:]*(\d{2}[\/\-]\d{2}[\/\-]\d{4})/gi,
-      /(?:Vencimento|VENCIMENTO)[\s:]*(\d{2}[\/\-]\d{2}[\/\-]\d{2,4})/gi,
-    ];
-    
-    for (const regex of regexesVencimento) {
-      const matchVencimento = texto.match(regex);
-      if (matchVencimento && matchVencimento[0]) {
-        const dataMatch = matchVencimento[0].match(/(\d{2}[\/\-]\d{2}[\/\-]\d{2,4})/);
-        if (dataMatch) {
-          const partes = dataMatch[0].split(/[\/\-]/);
-          let [dia, mes, ano] = partes;
-          
-          // Converter ano de 2 dígitos para 4 dígitos
-          if (ano.length === 2) {
-            const anoNum = parseInt(ano);
-            ano = anoNum > 50 ? `19${ano}` : `20${ano}`;
-          }
-          
-          resultado.vencimento = `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
-          console.log('📅 Vencimento extraído do texto:', matchVencimento[0], '→', resultado.vencimento);
-          break;
-        }
-      }
-    }
   }
   
   // Extrair beneficiário/cedente - buscar no texto todo

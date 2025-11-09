@@ -90,7 +90,35 @@ export function BoletoForm({ onSubmit, onCancel }: BoletoFormProps) {
         const result = parseBoleto(codigoParaProcessar);
         
         if (result.isValid) {
-          setParseResult(result);
+          // Usar dados do PDF (mais confiáveis) em vez dos calculados pelo parseBoleto
+          console.log('🔄 Mesclando dados:', {
+            dadosExtraidosPDF: dadosExtraidos,
+            resultadoParseBoleto: result
+          });
+          
+          console.log('🔍 Verificando vencimento:', {
+            vencimentoPDF: dadosExtraidos.vencimento,
+            temVencimentoPDF: !!dadosExtraidos.vencimento,
+            vencimentoParseBoleto: result.vencimento
+          });
+          
+          // Criar data de vencimento corretamente (sem problemas de fuso horário)
+          let vencimentoFinal = result.vencimento;
+          if (dadosExtraidos.vencimento) {
+            const [ano, mes, dia] = dadosExtraidos.vencimento.split('-').map(Number);
+            vencimentoFinal = new Date(ano, mes - 1, dia);
+          }
+          
+          const resultadoMesclado = {
+            ...result,
+            valor: dadosExtraidos.valor ?? result.valor,
+            vencimento: vencimentoFinal,
+          };
+          
+          console.log('✅ Resultado final mesclado:', resultadoMesclado);
+          console.log('📅 Vencimento final:', resultadoMesclado.vencimento);
+          
+          setParseResult(resultadoMesclado);
           
           // Preencher campos automaticamente se encontrados
           if (dadosExtraidos.beneficiario) {
@@ -210,37 +238,6 @@ export function BoletoForm({ onSubmit, onCancel }: BoletoFormProps) {
             </HStack>
           </Button>
         </Box>
-
-        <HStack>
-          <Separator flex={1} />
-          <Text fontSize="sm" color="gray.500">OU</Text>
-          <Separator flex={1} />
-        </HStack>
-
-        {/* Input manual de código */}
-        <Field label="Código do Boleto" required>
-          <Input
-            placeholder="Digite ou cole o código de barras ou linha digitável"
-            value={codigo}
-            onChange={(e) => handleCodigoChange(e.target.value)}
-            fontFamily="mono"
-          />
-          <Text fontSize="xs" color="gray.500" mt={1}>
-            44 dígitos (código de barras) ou 47 dígitos (linha digitável)
-          </Text>
-        </Field>
-
-        <Button
-          variant="outline"
-          type="button"
-          onClick={handleProcessar}
-          colorScheme="blue"
-          width="full"
-          loading={isProcessing}
-          disabled={!codigo.trim()}
-        >
-          Processar Código
-        </Button>
 
         {parseError && (
           <Box p={3} bg="red.50" borderRadius="md" borderWidth={1} borderColor="red.200">

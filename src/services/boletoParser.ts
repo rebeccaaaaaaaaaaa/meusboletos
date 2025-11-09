@@ -194,9 +194,22 @@ function extrairVencimento(codigoBarras: string): Date | undefined {
     return undefined;
   }
 
-  // Data base: 07/10/1997
-  const dataBase = new Date(1997, 9, 7);
-  const vencimento = new Date(dataBase);
+  // FEBRABAN mudou a data base em 21/02/2025
+  // Fator > 9000: usar data base antiga (07/10/1997)
+  // Fator <= 9000: usar nova data base (22/02/2025)
+  
+  let dataBase: Date;
+  let vencimento: Date;
+  
+  if (fatorVencimento > 9000) {
+    // Padrão antigo (antes de 21/02/2025)
+    dataBase = new Date(1997, 9, 7); // 07/10/1997
+  } else {
+    // Padrão novo (após 21/02/2025)
+    dataBase = new Date(2025, 1, 22); // 22/02/2025
+  }
+  
+  vencimento = new Date(dataBase);
   vencimento.setDate(vencimento.getDate() + fatorVencimento);
 
   return vencimento;
