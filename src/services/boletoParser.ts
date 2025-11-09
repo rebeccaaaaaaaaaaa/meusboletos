@@ -57,18 +57,23 @@ function calcularDVModulo10(numero: string): number {
  * Calcula o dígito verificador usando módulo 11
  */
 function calcularDVModulo11(numero: string): number {
-  const sequencia = '2345678923456789';
   let soma = 0;
+  let multiplicador = 2;
 
-  for (let i = 0; i < numero.length; i++) {
-    soma += parseInt(numero[i]) * parseInt(sequencia[i]);
+  // Percorrer da direita para esquerda
+  for (let i = numero.length - 1; i >= 0; i--) {
+    soma += parseInt(numero[i]) * multiplicador;
+    multiplicador = multiplicador === 9 ? 2 : multiplicador + 1;
   }
 
   const resto = soma % 11;
-  if (resto === 0 || resto === 1 || resto === 10) {
+  const dv = 11 - resto;
+  
+  // Se DV for 0, 10 ou 11, usar 1
+  if (dv === 0 || dv === 10 || dv === 11) {
     return 1;
   }
-  return 11 - resto;
+  return dv;
 }
 
 /**
@@ -156,11 +161,19 @@ function extrairValor(codigoBarras: string): number | undefined {
   const limpa = limparCodigo(codigoBarras);
   
   if (limpa.length !== 44) {
+    console.log('❌ Código não tem 44 dígitos para extrair valor:', limpa.length);
     return undefined;
   }
 
   const valorString = limpa.substring(9, 19);
   const valor = parseInt(valorString) / 100;
+
+  console.log('💰 Extração de valor:', {
+    codigoBarras: limpa,
+    valorString: valorString,
+    posicoes: '9-19',
+    valorCalculado: valor
+  });
 
   return valor > 0 ? valor : undefined;
 }
@@ -210,6 +223,7 @@ function validarCodigoBarras(codigoBarras: string): boolean {
   const limpa = limparCodigo(codigoBarras);
   
   if (limpa.length !== 44) {
+    console.log('❌ Código de barras não tem 44 dígitos:', limpa.length);
     return false;
   }
 
@@ -221,6 +235,16 @@ function validarCodigoBarras(codigoBarras: string): boolean {
   
   // Calcular DV
   const dvCalculado = calcularDVModulo11(codigoSemDV);
+
+  console.log('🔐 Validação DV:', {
+    codigoBarras: limpa,
+    codigoBarrasLength: limpa.length,
+    codigoSemDV: codigoSemDV,
+    codigoSemDVLength: codigoSemDV.length,
+    dvEncontrado: dv,
+    dvCalculado: dvCalculado,
+    valido: dv === dvCalculado
+  });
 
   return dv === dvCalculado;
 }

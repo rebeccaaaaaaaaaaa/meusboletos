@@ -45,7 +45,12 @@ export function BoletoForm({ onSubmit, onCancel }: BoletoFormProps) {
     }
 
     setIsProcessing(true);
+    console.log('🔍 Processando código:', codigo);
+    console.log('🔍 Código limpo:', codigo.replace(/\D/g, ''));
+    console.log('🔍 Comprimento:', codigo.replace(/\D/g, '').length);
+    
     const result = parseBoleto(codigo);
+    console.log('📊 Resultado do parse:', result);
     
     if (!result.isValid) {
       setParseError(result.error || 'Código inválido');
@@ -132,13 +137,14 @@ export function BoletoForm({ onSubmit, onCancel }: BoletoFormProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!modoManual && !parseResult?.isValid) {
-      setParseError('Processe o código do boleto primeiro ou ative o modo manual');
+    if (!descricao.trim()) {
+      setParseError('Digite uma descrição para o boleto');
       return;
     }
 
-    if (!descricao.trim()) {
-      setParseError('Digite uma descrição para o boleto');
+    // Se não está em modo manual e não tem parseResult válido, não pode salvar
+    if (!modoManual && !parseResult?.isValid) {
+      setParseError('Processe o código do boleto primeiro ou ative o modo manual');
       return;
     }
 
@@ -170,6 +176,11 @@ export function BoletoForm({ onSubmit, onCancel }: BoletoFormProps) {
       observacoes: observacoes.trim() || undefined,
     };
 
+    console.log('💾 Salvando boleto:', {
+      parseResult: parseResult,
+      boletoInput: boletoInput
+    });
+
     onSubmit(boletoInput);
   };
 
@@ -186,6 +197,7 @@ export function BoletoForm({ onSubmit, onCancel }: BoletoFormProps) {
             style={{ display: 'none' }}
           />
           <Button
+            variant="outline"
             type="button"
             onClick={handleClickUpload}
             colorScheme="purple"
@@ -219,6 +231,7 @@ export function BoletoForm({ onSubmit, onCancel }: BoletoFormProps) {
         </Field>
 
         <Button
+          variant="outline"
           type="button"
           onClick={handleProcessar}
           colorScheme="blue"
@@ -292,29 +305,20 @@ export function BoletoForm({ onSubmit, onCancel }: BoletoFormProps) {
             placeholder="Ex: Conta de luz, Aluguel, etc"
             value={descricao}
             onChange={(e) => setDescricao(e.target.value)}
-            borderColor={!descricao.trim() ? 'orange.300' : undefined}
           />
-          {!descricao.trim() && (
-            <Text fontSize="xs" color="orange.600" mt={1}>
-              ⚠️ Campo obrigatório - Digite uma descrição para identificar o boleto
-            </Text>
-          )}
         </Field>
 
         <Field label="Beneficiário">
           <Input
-            placeholder="Nome da empresa ou pessoa (opcional)"
+            placeholder="Nome da empresa ou pessoa"
             value={beneficiario}
             onChange={(e) => setBeneficiario(e.target.value)}
           />
-          <Text fontSize="xs" color="gray.500" mt={1}>
-            Opcional - Pode ser preenchido automaticamente do PDF
-          </Text>
         </Field>
 
         <Field label="Observações">
           <Textarea
-            placeholder="Observações adicionais (opcional)"
+            placeholder="Observações adicionais"
             value={observacoes}
             onChange={(e) => setObservacoes(e.target.value)}
             rows={3}
@@ -339,9 +343,10 @@ export function BoletoForm({ onSubmit, onCancel }: BoletoFormProps) {
             </Button>
           )}
           <Button
+            variant="outline"
             type="submit"
             colorScheme="green"
-            disabled={(!modoManual && !parseResult?.isValid) || !descricao.trim()}
+            disabled={!descricao.trim()}
           >
             Salvar Boleto
           </Button>

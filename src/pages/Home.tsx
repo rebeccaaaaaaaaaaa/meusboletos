@@ -187,7 +187,7 @@ export default function Home() {
 
         {/* Ações e Filtros */}
         <Flex gap={4} flexWrap="wrap" align="center">
-          <Button colorScheme="blue" onClick={() => setIsModalOpen(true)}>
+          <Button variant="outline" onClick={() => setIsModalOpen(true)}>
             <FiPlus /> Adicionar Boleto
           </Button>
           
