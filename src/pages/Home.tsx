@@ -16,7 +16,7 @@ import {
 } from '@chakra-ui/react';
 import { FiPlus, FiDownload, FiUpload } from 'react-icons/fi';
 import { BoletoCard } from '../components/BoletoCard';
-import { BoletoForm } from '../components/BoletoForm';
+import { BoletoForm } from '../components/boleto/BoletoForm';
 import { Dialog } from '../components/ui/dialog';
 import * as storage from '../services/storage';
 import { Boleto, BoletoStatus, CreateBoletoInput } from '../types';
